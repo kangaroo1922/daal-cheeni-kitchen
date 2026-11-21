@@ -1,3 +1,4 @@
+import usePageTitle from '../hooks/usePageTitle.js';
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import OrderSummary from '../components/OrderSummary.jsx';
@@ -9,6 +10,7 @@ import { formatPrice } from '../utils/format.js';
 const EMPTY_FORM = { name: '', phone: '', method: 'delivery', sector: '', address: '', pickupSlot: '', notes: '' };
 
 export default function CheckoutPage({ lines, avoided, onPlaceOrder }) {
+  usePageTitle('Checkout');
   const navigate = useNavigate();
   const [form, setForm] = useState(EMPTY_FORM);
   const [touched, setTouched] = useState({});

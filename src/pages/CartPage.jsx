@@ -1,9 +1,11 @@
+import usePageTitle from '../hooks/usePageTitle.js';
 import { Link, useNavigate } from 'react-router-dom';
 import CartLine from '../components/CartLine.jsx';
 import OrderSummary from '../components/OrderSummary.jsx';
 import { getCartIssues } from '../utils/cartUtils.js';
 
 export default function CartPage({ lines, avoided, onUpdateQty, onRemove, onClear }) {
+  usePageTitle('Your cart');
   const navigate = useNavigate();
   const issues = getCartIssues(lines, avoided);
 

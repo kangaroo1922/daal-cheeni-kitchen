@@ -4,7 +4,10 @@ export const STORAGE_KEYS = {
   cart: 'dck-cart',
   allergens: 'dck-avoided-allergens',
   lastOrder: 'dck-last-order',
+  demo: 'dck-demo-settings',
 };
+
+export const DEFAULT_DEMO = { failNextLoad: false, emptyMenu: false, changedAvailability: false };
 
 export function loadJSON(key, fallback) {
   try {

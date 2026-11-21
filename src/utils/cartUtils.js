@@ -48,3 +48,13 @@ export function getCartIssues(lines, avoided) {
   }
   return issues;
 }
+
+// Saved data may be old or hand-edited: keep only well-formed entries.
+export function sanitizeSavedCart(saved) {
+  if (!Array.isArray(saved)) return [];
+  return saved.filter((l) => l && typeof l.id === 'string' && Number.isInteger(l.qty) && l.qty > 0);
+}
+
+export function sanitizeAllergens(saved) {
+  return Array.isArray(saved) ? saved.filter((a) => a in ALLERGENS) : [];
+}

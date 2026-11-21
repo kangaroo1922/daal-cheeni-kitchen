@@ -1,8 +1,10 @@
+import usePageTitle from '../hooks/usePageTitle.js';
 import { Link, useLocation } from 'react-router-dom';
 import { loadJSON, STORAGE_KEYS } from '../utils/storage.js';
 import { formatPrice } from '../utils/format.js';
 
 export default function ConfirmationPage() {
+  usePageTitle('Order confirmed');
   const location = useLocation();
   // Prefer the order passed during navigation; fall back to the saved copy after a refresh.
   const order = location.state?.order ?? loadJSON(STORAGE_KEYS.lastOrder, null);

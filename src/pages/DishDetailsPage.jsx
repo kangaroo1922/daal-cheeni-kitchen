@@ -1,3 +1,4 @@
+import usePageTitle from '../hooks/usePageTitle.js';
 import { useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import DishImage from '../components/DishImage.jsx';
@@ -16,6 +17,7 @@ export default function DishDetailsPage({ menu, cart, avoided, onAdd }) {
   // The menu link keeps the user's search/filters (passed as ?query) so "Back to menu" restores them.
   const backTo = `/menu${location.search}`;
   const dish = menu.find((d) => d.id === id);
+  usePageTitle(dish ? dish.name : 'Dish not found');
 
   if (!dish) {
     const suggestions = menu.filter((d) => d.stock > 0).slice(0, 3);

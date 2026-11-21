@@ -1,3 +1,4 @@
+import usePageTitle from '../hooks/usePageTitle.js';
 import { useSearchParams } from 'react-router-dom';
 import DishCard from '../components/DishCard.jsx';
 import AllergenPreferences from '../components/AllergenPreferences.jsx';
@@ -27,6 +28,7 @@ const sorters = {
 };
 
 export default function MenuPage({ menu, cart, avoided, onAvoidedChange, onAdd }) {
+  usePageTitle('Menu');
   const [params, setParams] = useSearchParams();
   const filters = readFilters(params);
 

@@ -30,7 +30,7 @@ export default function CartLine({ line, issues, onUpdateQty, onRemove }) {
           <QuantityControl
             id={`qty-${id}`}
             value={qty}
-            max={Math.max(getMaxQuantity(dish), qty)}
+            max={getMaxQuantity(dish)}
             onChange={(next) => onUpdateQty(id, next)}
           />
         )}

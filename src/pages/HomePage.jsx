@@ -1,8 +1,10 @@
+import usePageTitle from '../hooks/usePageTitle.js';
 import { Link } from 'react-router-dom';
 import { DELIVERY_FEE, DELIVERY_SECTORS, FREE_DELIVERY_FROM, MAX_PER_DISH, MIN_DELIVERY_ORDER } from '../rules/orderRules.js';
 import { formatPrice } from '../utils/format.js';
 
 export default function HomePage() {
+  usePageTitle('Home');
   return (
     <>
       <section className="hero">

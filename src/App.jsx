@@ -11,9 +11,9 @@ import CartPage from './pages/CartPage.jsx';
 import CheckoutPage from './pages/CheckoutPage.jsx';
 import ConfirmationPage from './pages/ConfirmationPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
-import { fetchMenu } from './services/menuApi.js';
+import { clearSimulatedFailure, fetchMenu } from './services/menuApi.js';
 import { checkQuantity, getAllergenConflicts, getMaxQuantity } from './rules/orderRules.js';
-import { buildCartLines, getItemCount, getSubtotal } from './utils/cartUtils.js';
+import { buildCartLines, getItemCount, getSubtotal, sanitizeAllergens, sanitizeSavedCart } from './utils/cartUtils.js';
 import { loadJSON, saveJSON, STORAGE_KEYS } from './utils/storage.js';
 
 // App owns the shared state (menu, cart, allergen preferences) and passes it down as props.
@@ -24,8 +24,8 @@ export default function App() {
   const [error, setError] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
   // Lazy initial state: read localStorage once on first render.
-  const [cart, setCart] = useState(() => loadJSON(STORAGE_KEYS.cart, []));
-  const [avoided, setAvoided] = useState(() => loadJSON(STORAGE_KEYS.allergens, []));
+  const [cart, setCart] = useState(() => sanitizeSavedCart(loadJSON(STORAGE_KEYS.cart, [])));
+  const [avoided, setAvoided] = useState(() => sanitizeAllergens(loadJSON(STORAGE_KEYS.allergens, [])));
 
   // Load the menu; re-runs when reloadKey changes (the Retry button).
   useEffect(() => {
@@ -83,7 +83,9 @@ export default function App() {
   // Derived values – recalculated each render from current state, never stored separately.
   const lines = status === 'ready' ? buildCartLines(cart, menu) : [];
   const itemCount = getItemCount(cart);
-  const dataProps = { status, error, onRetry: () => setReloadKey((k) => k + 1) };
+  const reloadMenu = () => setReloadKey((k) => k + 1);
+  const retryMenu = () => { clearSimulatedFailure(); reloadMenu(); };
+  const dataProps = { status, error, onRetry: retryMenu };
 
   return (
     <>
@@ -116,7 +118,7 @@ export default function App() {
         </Routes>
       </main>
       <MobileCartBar itemCount={itemCount} subtotal={getSubtotal(lines)} />
-      <Footer />
+      <Footer onReload={reloadMenu} />
     </>
   );
 }
