@@ -1,54 +1,99 @@
-import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import DishCard from '../components/DishCard.jsx';
 import AllergenPreferences from '../components/AllergenPreferences.jsx';
-import { CATEGORIES } from '../data/menu.js';
+import MenuFilters, { SORT_OPTIONS } from '../components/MenuFilters.jsx';
+import { getAllergenConflicts } from '../rules/orderRules.js';
+
+// Filters live in the URL (?q=&cat=&sort=...) instead of component state, so opening a dish
+// and pressing Back – or refreshing, or sharing the link – keeps the customer's place.
+function readFilters(params) {
+  const sort = params.get('sort');
+  return {
+    q: params.get('q') ?? '',
+    cat: params.get('cat') ?? '',
+    sort: sort in SORT_OPTIONS ? sort : 'featured',
+    veg: params.get('veg') === '1',
+    avail: params.get('avail') === '1',
+    safe: params.get('safe') === '1',
+  };
+}
+
+const sorters = {
+  featured: () => 0,
+  'price-asc': (a, b) => a.price - b.price,
+  'price-desc': (a, b) => b.price - a.price,
+  fastest: (a, b) => a.prepMinutes - b.prepMinutes,
+  name: (a, b) => a.name.localeCompare(b.name),
+};
 
 export default function MenuPage({ menu, cart, avoided, onAvoidedChange, onAdd }) {
-  const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('all');
-  const [vegOnly, setVegOnly] = useState(false);
-  const [sort, setSort] = useState('popular');
+  const [params, setParams] = useSearchParams();
+  const filters = readFilters(params);
 
-  const text = query.trim().toLowerCase();
-  const results = [...menu]
-    .filter((d) => !text || `${d.name} ${d.description}`.toLowerCase().includes(text))
-    .filter((d) => category === 'all' || d.category === category)
-    .filter((d) => !vegOnly || d.vegetarian)
-    .sort((a, b) => {
-      if (sort === 'price-asc') return a.price - b.price;
-      if (sort === 'price-desc') return b.price - a.price;
-      return 0;
-    });
+  function updateFilter(key, value) {
+    const next = new URLSearchParams(params);
+    if (value === '' || value === false || (key === 'sort' && value === 'featured')) next.delete(key);
+    else next.set(key, value === true ? '1' : value);
+    // replace: typing in search shouldn't create one history entry per keystroke
+    setParams(next, { replace: true });
+  }
+  const clearFilters = () => setParams({}, { replace: true });
+  const activeCount = ['q', 'cat', 'veg', 'avail', 'safe'].filter((k) => Boolean(filters[k])).length;
+
+  const text = filters.q.trim().toLowerCase();
+  const results = menu
+    .filter((d) => !text || `${d.name} ${d.description} ${d.category}`.toLowerCase().includes(text))
+    .filter((d) => !filters.cat || d.category === filters.cat)
+    .filter((d) => !filters.veg || d.vegetarian)
+    .filter((d) => !filters.avail || d.stock > 0)
+    .filter((d) => !filters.safe || getAllergenConflicts(d, avoided).length === 0)
+    .sort(sorters[filters.sort]); // filter() already returned a new array, so sort() doesn't touch `menu`
+
+  const qtyInCart = (id) => cart.find((l) => l.id === id)?.qty ?? 0;
+  const search = params.toString() ? `?${params.toString()}` : '';
 
   return (
     <div className="container page">
-      <h1>Today&apos;s menu</h1>
-      <AllergenPreferences avoided={avoided} onChange={onAvoidedChange} />
-      <div className="filters">
-        <label>Search <input value={query} onChange={(e) => setQuery(e.target.value)} /></label>
-        <label>Category
-          <select value={category} onChange={(e) => setCategory(e.target.value)}>
-            <option value="all">All</option>
-            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </label>
-        <label><input type="checkbox" checked={vegOnly} onChange={(e) => setVegOnly(e.target.checked)} /> Vegetarian only</label>
-        <label>Sort
-          <select value={sort} onChange={(e) => setSort(e.target.value)}>
-            <option value="popular">Menu order</option>
-            <option value="price-asc">Price: low to high</option>
-            <option value="price-desc">Price: high to low</option>
-          </select>
-        </label>
+      <div className="page-head">
+        <h1>Today&apos;s menu</h1>
+        <p className="muted">Freshly cooked in H-11 · Max 5 portions per dish · Delivery from Rs 800</p>
       </div>
-      {results.length === 0 ? <p>No dishes match your search.</p> : (
-        <div className="dish-grid">
-          {results.map((dish) => (
-            <DishCard key={dish.id} dish={dish} avoided={avoided} onAdd={onAdd}
-              inCartQty={cart.find((l) => l.id === dish.id)?.qty ?? 0} />
-          ))}
+
+      <div className="menu-layout">
+        <div className="menu-sidebar">
+          <MenuFilters filters={filters} onChange={updateFilter} onClear={clearFilters} activeCount={activeCount} />
+          <div className="card"><AllergenPreferences avoided={avoided} onChange={onAvoidedChange} /></div>
         </div>
-      )}
+
+        <section aria-labelledby="results-heading">
+          <h2 id="results-heading" className="results-count" aria-live="polite">
+            {menu.length === 0 ? 'No dishes' : `Showing ${results.length} of ${menu.length} dishes`}
+          </h2>
+
+          {menu.length === 0 ? (
+            // The data itself is empty – different from "your filters matched nothing".
+            <div className="state-box">
+              <h3>Today’s menu hasn’t been published yet</h3>
+              <p>The kitchen usually publishes the menu by 11:00 am. Please check back soon.</p>
+            </div>
+          ) : results.length === 0 ? (
+            <div className="state-box">
+              <h3>No dishes match {filters.q ? `“${filters.q}”` : 'these filters'}</h3>
+              <p>Try a different word, or remove a filter. {filters.cat && `You’re only looking at ${filters.cat}.`}</p>
+              <div className="btn-row">
+                {filters.q && <button type="button" className="btn btn-secondary" onClick={() => updateFilter('q', '')}>Clear search</button>}
+                <button type="button" className="btn btn-primary" onClick={clearFilters}>Show all dishes</button>
+              </div>
+            </div>
+          ) : (
+            <div className="dish-grid">
+              {results.map((dish) => (
+                <DishCard key={dish.id} dish={dish} avoided={avoided} onAdd={onAdd} inCartQty={qtyInCart(dish.id)} linkSearch={search} />
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
+import MobileCartBar from './components/MobileCartBar.jsx';
 import DataState from './components/DataState.jsx';
 import HomePage from './pages/HomePage.jsx';
 import MenuPage from './pages/MenuPage.jsx';
@@ -12,7 +13,7 @@ import ConfirmationPage from './pages/ConfirmationPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import { fetchMenu } from './services/menuApi.js';
 import { checkQuantity, getAllergenConflicts, getMaxQuantity } from './rules/orderRules.js';
-import { buildCartLines, getItemCount } from './utils/cartUtils.js';
+import { buildCartLines, getItemCount, getSubtotal } from './utils/cartUtils.js';
 import { loadJSON, saveJSON, STORAGE_KEYS } from './utils/storage.js';
 
 // App owns the shared state (menu, cart, allergen preferences) and passes it down as props.
@@ -114,6 +115,7 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
+      <MobileCartBar itemCount={itemCount} subtotal={getSubtotal(lines)} />
       <Footer />
     </>
   );
