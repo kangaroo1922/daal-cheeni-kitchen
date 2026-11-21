@@ -1,6 +1,6 @@
 # Daal Cheeni Kitchen – React Business Website
 
-**Student:** _Abdul Rafay_ · **Roll No:** _23I-2008_ · **Section:** _CY(5C)_ · **Course:** CS4032 Web Programming, Assignment 02
+**Student:** Abdul Rafay · **Roll No:** 23I-2008 · **Section:** CY(5C) · **Course:** CS4032 Web Programming, Assignment 02
 
 - **GitHub:** https://github.com/kangaroo1922/daal-cheeni-kitchen
 - **Live site:** https://daal-cheeni-kitchen.vercel.app/
