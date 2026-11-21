@@ -1,19 +1,20 @@
 import { useState } from 'react';
 import DishCard from '../components/DishCard.jsx';
+import AllergenPreferences from '../components/AllergenPreferences.jsx';
 import { CATEGORIES } from '../data/menu.js';
 
-export default function MenuPage({ menu }) {
+export default function MenuPage({ menu, cart, avoided, onAvoidedChange, onAdd }) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [vegOnly, setVegOnly] = useState(false);
   const [sort, setSort] = useState('popular');
 
   const text = query.trim().toLowerCase();
-  const results = menu
+  const results = [...menu]
     .filter((d) => !text || `${d.name} ${d.description}`.toLowerCase().includes(text))
     .filter((d) => category === 'all' || d.category === category)
     .filter((d) => !vegOnly || d.vegetarian)
-    .toSorted((a, b) => {
+    .sort((a, b) => {
       if (sort === 'price-asc') return a.price - b.price;
       if (sort === 'price-desc') return b.price - a.price;
       return 0;
@@ -22,6 +23,7 @@ export default function MenuPage({ menu }) {
   return (
     <div className="container page">
       <h1>Today&apos;s menu</h1>
+      <AllergenPreferences avoided={avoided} onChange={onAvoidedChange} />
       <div className="filters">
         <label>Search <input value={query} onChange={(e) => setQuery(e.target.value)} /></label>
         <label>Category
@@ -41,7 +43,10 @@ export default function MenuPage({ menu }) {
       </div>
       {results.length === 0 ? <p>No dishes match your search.</p> : (
         <div className="dish-grid">
-          {results.map((dish) => <DishCard key={dish.id} dish={dish} />)}
+          {results.map((dish) => (
+            <DishCard key={dish.id} dish={dish} avoided={avoided} onAdd={onAdd}
+              inCartQty={cart.find((l) => l.id === dish.id)?.qty ?? 0} />
+          ))}
         </div>
       )}
     </div>
